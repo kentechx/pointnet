@@ -46,12 +46,20 @@ logits = model(x)
 
 
 ## Performance
-Classification accuracy on ModelNet40 dataset (see [modelnet40_experiments](
+Classification accuracy on ModelNet40 dataset (2048 points, see [modelnet40_experiments](
 https://github.com/kentechx/modelnet40_experiments) for details):
 
-| Model    | Overall Accuracy |
-|----------|------------------|
-| PointNet | 89.4%            |
+| Model                   | Overall Accuracy |
+|-------------------------|------------------|
+| PointNet                | 89.4%            |
+
+## Other Implementationss
+[charlesq34/pointnet](https://github.com/charlesq34/pointnet)
+
+[fxia22/pointnet.pytorch](https://github.com/fxia22/pointnet.pytorch)
+
+[yanx27/Pointnet_Pointnet2_pytorch](https://github.com/yanx27/Pointnet_Pointnet2_pytorch)
+
 
 ## References
 
