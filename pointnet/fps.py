@@ -83,7 +83,7 @@ def fps_kernel(x_ptr, dist_ptr, out_ptr,
 
         # update idx
         # i_max_dist_n = tl.argmax(max_dist_n, axis=0)
-        idx_n = tl.where(max_dist_n == tl.max(max_dist_n), idx_n, N)
+        idx_n = tl.where(max_dist_n == tl.max(max_dist_n, axis=0), idx_n, N)
         idx = tl.min(idx_n, axis=0)
 
         # update idx
