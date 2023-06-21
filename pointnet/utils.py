@@ -118,7 +118,7 @@ def fps_triton(x, n_sample, start_idx: int = None):
 
 def farthest_point_sampling(x: torch.Tensor, n_sample: int, start_idx: int = None):
     # x: (b, n, 3)
-    b, n = x.size()[:2]
+    b, n = x.shape[:2]
     assert n_sample <= n, "not enough points to sample"
 
     if n_sample == n:
@@ -143,3 +143,16 @@ def farthest_point_sampling(x: torch.Tensor, n_sample: int, start_idx: int = Non
         cur_x[:, 0, :] = x[torch.arange(b), idx_farthest]
 
     return sel_idx
+
+
+def ball_query_pytorch(src, query, radius, k):
+    # src: (b, n, 3)
+    # query: (b, m, 3)
+    b, n = src.shape[:2]
+    m = query.shape[1]
+    dists = torch.cdist(query, src)  # (b, m, n)
+    idx = repeat(torch.arange(n, device=src.device), 'n -> b m n', b=b, m=m)
+    idx = torch.where(dists > radius, n, idx)
+    idx = idx.sort(dim=-1).values[:, :, :k]  # (b, m, k)
+    idx = torch.where(idx == n, idx[:, :, [0]], idx)
+    return idx

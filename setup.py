@@ -16,7 +16,8 @@ setup(
     ],
     install_requires=[
         'torch>=1.10',
-        'einops>=0.6.1'
+        'einops>=0.6.1',
+        'taichi>=1.6.0'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
