@@ -3,7 +3,7 @@ import torch
 
 
 @ti.kernel
-def ball_query_kernel(
+def _ball_query_kernel(
         src: ti.types.ndarray(ndim=3),
         query: ti.types.ndarray(ndim=3),
         out: ti.types.ndarray(ndim=3),
@@ -30,7 +30,8 @@ def ball_query_kernel(
 
 
 def ball_query(src: torch.Tensor, query: torch.Tensor, radius, k):
+    assert src.shape[-1] == 3, "src shape should be (B, N, 3)"
     out = torch.full((*query.shape[:2], k), fill_value=-1, dtype=torch.long, device='cuda')
-    ball_query_kernel(src.contiguous(), query.contiguous(), out, radius, k)
+    _ball_query_kernel(src.contiguous(), query.contiguous(), out, radius, k)
     out = torch.where(out < 0, out[:, :, [0]], out)
     return out
