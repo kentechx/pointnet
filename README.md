@@ -1,8 +1,11 @@
 <img src="./pointnet.jpg" width="1200px"></img>
 
+[![PyPI version](https://badge.fury.io/py/pointnet.svg)](https://badge.fury.io/py/pointnet)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 # pointnet
 
-A pytorch implementation of PointNet
+A pytorch implementation of PointNet and PointNet++.
 
 ## Installation
 
@@ -18,6 +21,7 @@ pip install pointnet -i https://pypi.org/simple
 
 ## Usage
 
+### PointNet
 Perform classification with inputs xyz coordinates:
 
 ```python
@@ -44,6 +48,36 @@ x = torch.cat([xyz, other_feats], dim=1)
 logits = model(x)
 ```
 
+Perform semantic segmentation:
+
+```python
+import torch
+from pointnet import PointNetSeg
+
+model = PointNetSeg(3, 40)
+x = torch.randn(16, 3, 1024)
+logits = model(x)
+```
+
+### PointNet2
+PointNet2 uses [taichi](https://github.com/taichi-dev/taichi) to accelerate the computation of ball query. You need to 
+initialize taichi before using PointNet2.
+
+Perform classification with inputs xyz coordinates:
+
+```python
+import torch
+from pointnet import PointNet2SSGCls
+
+import taichi as ti
+ti.init(arch=ti.cuda)
+
+model = PointNet2SSGCls(in_dim=3, out_dim=40).cuda()
+x = torch.randn(16, 3, 1024).cuda()
+logits = model(x)
+```
+
+
 
 ## Performance
 Classification accuracy on ModelNet40 dataset (2048 points, see [modelnet40_experiments](
@@ -68,6 +102,16 @@ https://github.com/kentechx/modelnet40_experiments) for details):
   title={Pointnet: Deep learning on point sets for 3d classification and segmentation},
   author={Qi, Charles R and Su, Hao and Mo, Kaichun and Guibas, Leonidas J},
   booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition},
+  year={2017}
+}
+```
+
+```bibtex
+@article{qi2017pointnet++,
+  title={Pointnet++: Deep hierarchical feature learning on point sets in a metric space},
+  author={Qi, Charles Ruizhongtai and Yi, Li and Su, Hao and Guibas, Leonidas J},
+  journal={Advances in neural information processing systems},
+  volume={30},
   year={2017}
 }
 ```

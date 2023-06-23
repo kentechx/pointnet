@@ -63,9 +63,9 @@ class STN(nn.Module):
 class PointNetCls(nn.Module):
     def __init__(
             self,
-            *,
             in_dim,
             out_dim,
+            *,
             stn_3d=STN(in_dim=3),  # if None, no stn_3d
             with_head=True,
             head_norm=True,
@@ -141,9 +141,9 @@ class PointNetSeg(nn.Module):
 
     def __init__(
             self,
-            *,
             in_dim,
             out_dim,
+            *,
             stn_3d=STN(in_dim=3),  # if None, no stn_3d
             global_head_norm=True,  # if using normalization in the global head, disable it if batch size is 1
     ):
