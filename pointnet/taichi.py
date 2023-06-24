@@ -7,6 +7,7 @@ def _ball_query_kernel(
         src: ti.types.ndarray(ndim=3),
         query: ti.types.ndarray(ndim=3),
         out: ti.types.ndarray(ndim=3),
+        dists: ti.types.ndarray(ndim=3),
         radius: ti.float32,
         K: ti.int32
 ):
@@ -24,6 +25,7 @@ def _ball_query_kernel(
             dist = (query_pt - src_pt).norm()
             if dist <= radius:
                 out[b, m, count] = i
+                dists[b, m, count] = dist
                 count += 1
                 if count == K:
                     break
@@ -31,7 +33,10 @@ def _ball_query_kernel(
 
 def ball_query(src: torch.Tensor, query: torch.Tensor, radius, k):
     assert src.shape[-1] == 3, "src shape should be (B, N, 3)"
-    out = torch.full((*query.shape[:2], k), fill_value=-1, dtype=torch.long, device='cuda')
-    _ball_query_kernel(src.contiguous(), query.contiguous(), out, radius, k)
-    out = torch.where(out < 0, out[:, :, [0]], out)
-    return out
+    idx = torch.full((*query.shape[:2], k), fill_value=-1, dtype=torch.long, device='cuda')
+    dists = torch.full((*query.shape[:2], k), fill_value=-1, dtype=src.dtype, device='cuda')
+    _ball_query_kernel(src.contiguous(), query.contiguous(), idx, dists, radius, k)
+    mask = idx >= 0
+    idx = torch.where(mask, idx, idx[:, :, [0]])
+    dists = torch.where(mask, dists, dists[:, :, [0]])
+    return idx, dists

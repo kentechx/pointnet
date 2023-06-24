@@ -87,7 +87,7 @@ class SABlock(nn.Module):
         # src_xyz: (b, 3, n)
         # xyz: (b, 3, m)
         if not exists(neighbor_idx):
-            neighbor_idx = _ball_query(src_xyz, xyz, radius, k)  # (b, m, k)
+            neighbor_idx = _ball_query(src_xyz, xyz, radius, k)[0]  # (b, m, k)
         neighbor_xyz = gather(src_xyz, neighbor_idx)  # (b, 3, m, k)
         neighbor_xyz -= xyz[..., None]
         x = gather(src_x, neighbor_idx)  # (b, d, m, k)
