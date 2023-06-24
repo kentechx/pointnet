@@ -22,6 +22,7 @@ pip install pointnet -i https://pypi.org/simple
 ## Usage
 
 ### PointNet
+
 Perform classification with inputs xyz coordinates:
 
 ```python
@@ -60,7 +61,8 @@ logits = model(x)
 ```
 
 ### PointNet2
-PointNet2 uses [taichi](https://github.com/taichi-dev/taichi) to accelerate the computation of ball query. You need to 
+
+PointNet2 uses [taichi](https://github.com/taichi-dev/taichi) to accelerate the computation of ball query. You need to
 initialize taichi before using PointNet2.
 
 Perform classification with inputs xyz coordinates:
@@ -70,6 +72,7 @@ import torch
 from pointnet import PointNet2SSGCls
 
 import taichi as ti
+
 ti.init(arch=ti.cuda)
 
 model = PointNet2SSGCls(in_dim=3, out_dim=40).cuda()
@@ -77,23 +80,26 @@ x = torch.randn(16, 3, 1024).cuda()
 logits = model(x)
 ```
 
-
-
 ## Performance
-Classification accuracy on ModelNet40 dataset (2048 points, see [modelnet40_experiments](
+
+Classification accuracy on ModelNet40 dataset (see [modelnet40_experiments](
 https://github.com/kentechx/modelnet40_experiments) for details):
 
-| Model                   | Overall Accuracy |
-|-------------------------|------------------|
-| PointNet                | 89.4%            |
+| Model                | input | Overall Accuracy |
+|----------------------|-------|------------------|
+| PointNet (official)  | xyz   | 89.2%            |
+| PointNet             | xyz   | 90.7%            |
+| PointNet2 (official) | xyz   | 90.7%            |
+| PointNet2SSG         | xyz   | 90.7%            |
+| PointNet2MSG         | xyz   | 92.1%            |
 
 ## Other Implementationss
+
 [charlesq34/pointnet](https://github.com/charlesq34/pointnet)
 
 [fxia22/pointnet.pytorch](https://github.com/fxia22/pointnet.pytorch)
 
 [yanx27/Pointnet_Pointnet2_pytorch](https://github.com/yanx27/Pointnet_Pointnet2_pytorch)
-
 
 ## References
 
