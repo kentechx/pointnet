@@ -54,7 +54,3 @@ def ball_query_pytorch(src, query, radius, k):
     idx = torch.where(idx == n, idx[:, :, [0]], idx)
     _dists = dists.gather(-1, idx)  # (b, m, k)
     return idx, _dists
-
-
-def interpolate(dists):
-    pass
