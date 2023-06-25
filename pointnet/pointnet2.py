@@ -163,21 +163,21 @@ class UpBlock(nn.Module):
         return ori_x
 
 
-class PointNet2SSGCls(nn.Module):
+class PointNet2ClsSSG(nn.Module):
 
     def __init__(
             self,
             in_dim,
             out_dim,
             *,
-            downsampling_factors=(2, 4),
+            downsample_points=(512, 128),
             radii=(0.2, 0.4),
             ks=(32, 64),
             head_norm=True,
             dropout=0.5,
     ):
         super().__init__()
-        self.downsampling_factors = downsampling_factors
+        self.downsample_points = downsample_points
 
         self.sa1 = SABlock(in_dim, [64, 64, 128], radii[0], ks[0])
         self.sa2 = SABlock(128, [128, 128, 256], radii[1], ks[1])
@@ -210,10 +210,10 @@ class PointNet2SSGCls(nn.Module):
     def forward(self, x, xyz):
         # x: (b, c, n)
         # xyz: (b, 3, n)
-        xyz1 = downsample_fps(xyz, xyz.shape[2] // self.downsampling_factors[0]).xyz
+        xyz1 = downsample_fps(xyz, self.downsample_points[0]).xyz
         x1 = self.sa1(x, xyz, xyz1)
 
-        xyz2 = downsample_fps(xyz1, xyz1.shape[2] // self.downsampling_factors[1]).xyz
+        xyz2 = downsample_fps(xyz1, self.downsample_points[1]).xyz
         x2 = self.sa2(x1, xyz1, xyz2)
 
         x3 = self.global_sa(x2)
@@ -223,21 +223,21 @@ class PointNet2SSGCls(nn.Module):
         return out
 
 
-class PointNet2MSGCls(nn.Module):
+class PointNet2ClsMSG(nn.Module):
 
     def __init__(
             self,
             in_dim,
             out_dim,
             *,
-            downsampling_factors=(2, 4),
+            downsample_points=(512, 128),
             base_radius=0.1,
             base_k=16,
             head_norm=True,
             dropout=0.5,
     ):
         super().__init__()
-        self.downsampling_factors = downsampling_factors
+        self.downsample_points = downsample_points
 
         radii1 = [base_radius, base_radius * 2, base_radius * 4]
         ks1 = [base_k, base_k * 2, base_k * 8]
@@ -276,10 +276,10 @@ class PointNet2MSGCls(nn.Module):
     def forward(self, x, xyz):
         # x: (b, c, n)
         # xyz: (b, 3, n)
-        xyz1 = downsample_fps(xyz, xyz.shape[2] // self.downsampling_factors[0]).xyz
+        xyz1 = downsample_fps(xyz, self.downsample_points[0]).xyz
         x1 = self.sa1(x, xyz, xyz1)
 
-        xyz2 = downsample_fps(xyz1, xyz1.shape[2] // self.downsampling_factors[1]).xyz
+        xyz2 = downsample_fps(xyz1, self.downsample_points[1]).xyz
         x2 = self.sa2(x1, xyz1, xyz2)
 
         x3 = self.global_sa(x2)
@@ -297,12 +297,12 @@ class PointNet2PartSegSSG(nn.Module):
             out_dim,
             n_category=16,
             *,
-            downsampling_factors=(2, 4),
+            downsample_points=(512, 128),
             global_norm=True,
             dropout=0.5,
     ):
         super().__init__()
-        self.downsampling_factors = downsampling_factors
+        self.downsample_points = downsample_points
         self.n_category = n_category
 
         self.sa_blocks = nn.ModuleList([
@@ -347,7 +347,7 @@ class PointNet2PartSegSSG(nn.Module):
         xs = [x]
         xyzs = [xyz]
         for i, sa_block in enumerate(self.sa_blocks):
-            xyz = downsample_fps(xyzs[-1], xyzs[-1].shape[2] // self.downsampling_factors[i]).xyz
+            xyz = downsample_fps(xyzs[-1], self.downsample_points[i]).xyz
             x = sa_block(xs[-1], xyzs[-1], xyz)
             xs.append(x)
             xyzs.append(xyz)
@@ -376,12 +376,12 @@ class PointNet2PartSegMSG(nn.Module):
             out_dim,
             n_category=16,
             *,
-            downsampling_factors=(2, 4),
+            downsample_points=(512, 128),
             global_norm=True,
             dropout=0.5,
     ):
         super().__init__()
-        self.downsampling_factors = downsampling_factors
+        self.downsample_points = downsample_points
         self.n_category = n_category
 
         self.sa_blocks = nn.ModuleList([
@@ -426,7 +426,7 @@ class PointNet2PartSegMSG(nn.Module):
         xs = [x]
         xyzs = [xyz]
         for i, sa_block in enumerate(self.sa_blocks):
-            xyz = downsample_fps(xyzs[-1], xyzs[-1].shape[2] // self.downsampling_factors[i]).xyz
+            xyz = downsample_fps(xyzs[-1], self.downsample_points[i]).xyz
             x = sa_block(xs[-1], xyzs[-1], xyz)
             xs.append(x)
             xyzs.append(xyz)
@@ -443,5 +443,121 @@ class PointNet2PartSegMSG(nn.Module):
 
         category_emb = repeat(self.category_emb(category), 'b c -> b c n', n=x.shape[2])
         x = x + category_emb
+        out = self.head(x)
+        return out
+
+
+class PointNet2SegSSG(nn.Module):
+
+    def __init__(
+            self,
+            in_dim,
+            out_dim,
+            k=32,
+            *,
+            downsample_points=(1024, 256, 64, 16),
+            base_radius=0.1,
+            dropout=0.5
+    ):
+        super().__init__()
+        self.downsample_points = downsample_points
+
+        self.sa_blocks = nn.ModuleList([
+            SABlock(in_dim, [32, 32, 64], base_radius, k),
+            SABlock(64, [64, 64, 128], base_radius * 2, k),
+            SABlock(128, [128, 128, 256], base_radius * 4, k),
+            SABlock(256, [256, 256, 512], base_radius * 8, k)
+        ])
+
+        self.up_blocks = nn.ModuleList([
+            UpBlock(512 + 256, [256, 256], k=3),
+            UpBlock(256 + 128, [256, 256], k=3),
+            UpBlock(256 + 64, [256, 128], k=3),
+            UpBlock(128 + in_dim, [128, 128], k=3)
+        ])
+
+        self.head = nn.Sequential(
+            nn.Conv1d(128, 128, 1, bias=False),
+            nn.BatchNorm1d(128),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Conv1d(128, out_dim, 1),
+        )
+
+    def forward(self, x, xyz):
+        # x: (b, c, n)
+        # xyz: (b, 3, n)
+        xs = [x]
+        xyzs = [xyz]
+        for i, sa_block in enumerate(self.sa_blocks):
+            xyz = downsample_fps(xyzs[-1], self.downsample_points[i]).xyz
+            x = sa_block(xs[-1], xyzs[-1], xyz)
+            xs.append(x)
+            xyzs.append(xyz)
+
+        x, xyz = xs.pop(), xyzs.pop()
+        for up_block in self.up_blocks:
+            ori_x, ori_xyz = xs.pop(), xyzs.pop()
+            x = up_block(ori_x, ori_xyz, x, xyz)
+            xyz = ori_xyz
+
+        out = self.head(x)
+        return out
+
+
+class PointNet2SegMSG(nn.Module):
+
+    def __init__(
+            self,
+            in_dim,
+            out_dim,
+            ks=(16, 32),
+            *,
+            downsample_points=(1024, 256, 64, 16),
+            base_radii=(0.05, 0.1),
+            dropout=0.5
+    ):
+        super().__init__()
+        self.downsample_points = downsample_points
+
+        self.sa_blocks = nn.ModuleList([
+            SABlock(in_dim, [[16, 16, 32], [32, 32, 64]], base_radii, ks),
+            SABlock(32 + 64, [[64, 64, 128], [64, 96, 128]], [r * 2 for r in base_radii], ks),
+            SABlock(128 + 128, [[128, 196, 256], [128, 196, 256]], [r * 4 for r in base_radii], ks),
+            SABlock(256 + 256, [[256, 256, 512], [256, 384, 512]], [r * 8 for r in base_radii], ks)
+        ])
+
+        self.up_blocks = nn.ModuleList([
+            UpBlock(512 + 512 + 256 + 256, [256, 256], k=3),
+            UpBlock(256 + 128 + 128, [256, 256], k=3),
+            UpBlock(256 + 64 + 32, [256, 128], k=3),
+            UpBlock(128 + in_dim, [128, 128], k=3)
+        ])
+
+        self.head = nn.Sequential(
+            nn.Conv1d(128, 128, 1, bias=False),
+            nn.BatchNorm1d(128),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Conv1d(128, out_dim, 1),
+        )
+
+    def forward(self, x, xyz):
+        # x: (b, c, n)
+        # xyz: (b, 3, n)
+        xs = [x]
+        xyzs = [xyz]
+        for i, sa_block in enumerate(self.sa_blocks):
+            xyz = downsample_fps(xyzs[-1], self.downsample_points[i]).xyz
+            x = sa_block(xs[-1], xyzs[-1], xyz)
+            xs.append(x)
+            xyzs.append(xyz)
+
+        x, xyz = xs.pop(), xyzs.pop()
+        for up_block in self.up_blocks:
+            ori_x, ori_xyz = xs.pop(), xyzs.pop()
+            x = up_block(ori_x, ori_xyz, x, xyz)
+            xyz = ori_xyz
+
         out = self.head(x)
         return out
