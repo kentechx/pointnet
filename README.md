@@ -69,15 +69,32 @@ Perform classification with inputs xyz coordinates:
 
 ```python
 import torch
-from pointnet import PointNet2SSGCls
+from pointnet import PointNet2ClsSSG
 
 import taichi as ti
 
 ti.init(arch=ti.cuda)
 
-model = PointNet2SSGCls(in_dim=3, out_dim=40).cuda()
+model = PointNet2ClsSSG(in_dim=3, out_dim=40).cuda()
 x = torch.randn(16, 3, 1024).cuda()
-logits = model(x)
+xyz = x.clone()
+logits = model(x, xyz)
+```
+
+Semantic segmentation:
+
+```python
+import torch
+from pointnet import PointNet2SegSSG
+
+import taichi as ti
+
+ti.init(arch=ti.cuda)
+
+model = PointNet2SegSSG(in_dim=3, out_dim=40).cuda()
+x = torch.randn(16, 3, 1024).cuda()
+xyz = x.clone()
+logits = model(x, xyz)
 ```
 
 ## Performance
