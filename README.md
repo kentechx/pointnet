@@ -62,23 +62,15 @@ logits = model(x)
 
 ### PointNet2
 
-PointNet2 uses [taichi](https://github.com/taichi-dev/taichi) to accelerate the computation of ball query. You need to
-initialize taichi before using PointNet2.
-
-Perform classification with inputs xyz coordinates:
+Classification:
 
 ```python
 import torch
 from pointnet import PointNet2ClsSSG
 
-import taichi as ti
-
-ti.init(arch=ti.cuda)
-
-model = PointNet2ClsSSG(in_dim=3, out_dim=40).cuda()
-x = torch.randn(16, 3, 1024).cuda()
-xyz = x.clone()
-logits = model(x, xyz)
+model = PointNet2ClsSSG(in_dim=3, out_dim=40)
+x = torch.randn(16, 3, 1024)
+logits = model(x)
 ```
 
 Semantic segmentation:
@@ -87,11 +79,23 @@ Semantic segmentation:
 import torch
 from pointnet import PointNet2SegSSG
 
-import taichi as ti
+model = PointNet2SegSSG(in_dim=3, out_dim=10)
+x = torch.randn(16, 3, 1024)
+xyz = x.clone()
+logits = model(x, xyz)
+```
 
-ti.init(arch=ti.cuda)
+PointNet2 can use [taichi](https://github.com/taichi-dev/taichi) to accelerate the computation of ball query.
+If you are about to train on a single GPU, you can enable taichi by calling `enable_taichi()`.
 
-model = PointNet2SegSSG(in_dim=3, out_dim=40).cuda()
+Perform classification with inputs xyz coordinates:
+
+```python
+import torch
+from pointnet import PointNet2ClsSSG, enable_taichi
+
+enable_taichi()
+model = PointNet2ClsSSG(in_dim=3, out_dim=40).cuda()
 x = torch.randn(16, 3, 1024).cuda()
 xyz = x.clone()
 logits = model(x, xyz)

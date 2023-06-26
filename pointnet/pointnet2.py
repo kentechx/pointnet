@@ -6,9 +6,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import repeat, rearrange
 
-from .taichi import ball_query
-from .utils import farthest_point_sampling
+from .utils import farthest_point_sampling, ball_query_pytorch
 from .pointnet import STN
+
+# whether to use taichi for ball query
+TAICHI = False
+
+
+def enable_taichi():
+    import taichi as ti
+    global TAICHI
+    TAICHI = True
+    ti.init(ti.cuda)
 
 
 def exists(val):
@@ -25,7 +34,11 @@ def _ball_query(src, query, radius, k):
     # conduct ball query on dim 1
     src = rearrange(src, 'b d n -> b n d')
     query = rearrange(query, 'b d m -> b m d')
-    return ball_query(src, query, radius, k)
+    if TAICHI:
+        from .taichi import ball_query
+        return ball_query(src, query, radius, k)
+    else:
+        return ball_query_pytorch(src, query, radius, k)
 
 
 def cdist(x, y=None):
