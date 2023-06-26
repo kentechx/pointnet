@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='pointnet',
     packages=find_packages(),
-    version='0.0.4',
+    version='0.1.1',
     license='MIT',
     description='PointNet - Pytorch',
     author='Kaidi Shen',
