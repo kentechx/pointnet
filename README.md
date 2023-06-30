@@ -114,6 +114,15 @@ https://github.com/kentechx/modelnet40_experiments) for details):
 | PointNet2SSG         | xyz   | 90.7%            |
 | PointNet2MSG         | xyz   | 92.1%            |
 
+Part segmentation mIoU on ShapeNet dataset (see [shapenet_experiments](
+https://github.com/kentechx/shapenet_part_experiments) for details):
+
+| Model                | input | mIoU  |
+|----------------------|-------|-------|
+| PointNet2 (official) | xyz   | 85.1% |
+| PointNet2SSG         | xyz   | 84.8% |
+| PointNet2MSG         | xyz   | 85.2% |
+
 ## Other Implementationss
 
 [charlesq34/pointnet](https://github.com/charlesq34/pointnet)
