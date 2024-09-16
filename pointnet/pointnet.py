@@ -47,7 +47,7 @@ class STN(nn.Module):
         )
 
         nn.init.normal_(self.head[-1].weight, 0, 0.001)
-        nn.init.eye_(self.head[-1].bias.view(in_dim, in_dim))
+        nn.init.eye_(self.head[-1].bias.view(self.out_nd, self.out_nd))
 
     def forward(self, x):
         # x: (b, d, n)
